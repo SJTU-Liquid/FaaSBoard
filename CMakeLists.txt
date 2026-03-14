@@ -1,0 +1,69 @@
+# CMakeLists.txt
+
+# Set the minimum required CMake version
+cmake_minimum_required(VERSION 3.22)
+
+include(CMakePrintHelpers)
+
+# Define the project and its language
+project(faasboard CXX)
+
+set(SERVICE_COMPONENTS s3 lambda ecs)
+
+# Find OpenMP
+find_package(OpenMP REQUIRED)
+find_package(aws-lambda-runtime REQUIRED)
+find_package(AWSSDK REQUIRED COMPONENTS ${SERVICE_COMPONENTS})
+find_package(glog REQUIRED)
+find_package(gflags REQUIRED)
+
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -O3 -g -fno-strict-aliasing -mavx2")
+
+# Include cmake module
+include(CMakePrintHelpers)
+
+# Specify include directories
+include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/third-party/aws-lambda-app/include)
+include_directories($ENV{HOME}/local/include)
+link_directories($ENV{HOME}/local/lib)
+
+
+add_definitions("-Wall -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/lambda-install -DGLOG_USE_GLOG_EXPORT")
+
+# Create an executable target
+add_executable(preprocess_and_save ${CMAKE_SOURCE_DIR}/test/preprocess/preprocess_and_save.cpp)
+add_executable(local_bfs ${CMAKE_SOURCE_DIR}/test/local_bfs.cpp)
+add_executable(local_pr ${CMAKE_SOURCE_DIR}/test/local_pr.cpp)
+add_executable(local_sssp ${CMAKE_SOURCE_DIR}/test/local_sssp.cpp)
+add_executable(local_cc ${CMAKE_SOURCE_DIR}/test/local_cc.cpp)
+add_executable(lambda_bfs ${CMAKE_SOURCE_DIR}/test/lambda_bfs.cpp)
+add_executable(lambda_pr ${CMAKE_SOURCE_DIR}/test/lambda_pr.cpp)
+add_executable(lambda_sssp ${CMAKE_SOURCE_DIR}/test/lambda_sssp.cpp)
+add_executable(lambda_cc ${CMAKE_SOURCE_DIR}/test/lambda_cc.cpp)
+add_executable(proxy_server ${CMAKE_SOURCE_DIR}/test/proxy_server.cpp)
+add_executable(correctness_test ${CMAKE_SOURCE_DIR}/test/others/correctness_test.cpp)
+add_executable(txt2csr ${CMAKE_SOURCE_DIR}/test/preprocess/txt2csr.cpp)
+
+# Link
+target_link_libraries(preprocess_and_save PRIVATE hiredis hiredis_ssl OpenMP::OpenMP_CXX glog::glog gflags ${AWSSDK_LINK_LIBRARIES} metis GKlib m)
+target_link_libraries(local_bfs PRIVATE hiredis hiredis_ssl OpenMP::OpenMP_CXX glog::glog gflags ${AWSSDK_LINK_LIBRARIES} metis GKlib m)
+target_link_libraries(local_pr PRIVATE hiredis hiredis_ssl OpenMP::OpenMP_CXX glog::glog gflags ${AWSSDK_LINK_LIBRARIES} metis GKlib m)
+target_link_libraries(local_sssp PRIVATE hiredis hiredis_ssl OpenMP::OpenMP_CXX glog::glog gflags ${AWSSDK_LINK_LIBRARIES} metis GKlib m)
+target_link_libraries(local_cc PRIVATE hiredis hiredis_ssl OpenMP::OpenMP_CXX glog::glog gflags ${AWSSDK_LINK_LIBRARIES} metis GKlib m)
+target_link_libraries(lambda_bfs PRIVATE hiredis hiredis_ssl OpenMP::OpenMP_CXX glog::glog gflags AWS::aws-lambda-runtime ${AWSSDK_LINK_LIBRARIES} metis GKlib m)
+target_link_libraries(lambda_pr PRIVATE hiredis hiredis_ssl OpenMP::OpenMP_CXX glog::glog gflags AWS::aws-lambda-runtime ${AWSSDK_LINK_LIBRARIES} metis GKlib m)
+target_link_libraries(lambda_sssp PRIVATE hiredis hiredis_ssl OpenMP::OpenMP_CXX glog::glog gflags AWS::aws-lambda-runtime ${AWSSDK_LINK_LIBRARIES} metis GKlib m)
+target_link_libraries(lambda_cc PRIVATE hiredis hiredis_ssl OpenMP::OpenMP_CXX glog::glog gflags AWS::aws-lambda-runtime ${AWSSDK_LINK_LIBRARIES} metis GKlib m)
+target_link_libraries(proxy_server PRIVATE hiredis hiredis_ssl OpenMP::OpenMP_CXX glog::glog gflags ${AWSSDK_LINK_LIBRARIES} metis GKlib m)
+target_link_libraries(correctness_test PRIVATE hiredis hiredis_ssl OpenMP::OpenMP_CXX glog::glog gflags ${AWSSDK_LINK_LIBRARIES} metis GKlib m)
+target_link_libraries(txt2csr PRIVATE hiredis hiredis_ssl OpenMP::OpenMP_CXX glog::glog gflags ${AWSSDK_LINK_LIBRARIES} metis GKlib m)
+
+# create zip
+aws_lambda_package_target(lambda_bfs)
+aws_lambda_package_target(lambda_pr)
+aws_lambda_package_target(lambda_sssp)
+aws_lambda_package_target(lambda_cc)

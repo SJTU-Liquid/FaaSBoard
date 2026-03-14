@@ -1,0 +1,87 @@
+# 1. Use a lightweight base image
+FROM ubuntu:22.04
+
+# 2. Set environment variable to suppress interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 3. Set aws credential
+ARG AWS_ACCESS_KEY_ID
+ARG AWS_SECRET_ACCESS_KEY
+ENV AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+ENV AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+
+# 4. Install necessary runtime dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    g++ \
+    cmake \
+    libgflags-dev \
+    libssl-dev \
+    libcurl4-openssl-dev \
+    libboost-all-dev \
+    build-essential \
+    zlib1g-dev \
+    libssl-dev \
+    ninja-build \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# 5. Clone and install glog
+RUN git clone https://github.com/google/glog.git /tmp/glog && \
+    cd /tmp/glog && \
+    cmake . && \
+    make && make install && \
+    rm -rf /tmp/glog
+
+# 6. Install AWS SDK C++
+RUN git clone --recurse-submodules https://github.com/aws/aws-sdk-cpp.git /tmp/aws-sdk-cpp && \
+    cd /tmp/aws-sdk-cpp && \
+    mkdir build && \
+    cd build && \
+    cmake .. -DBUILD_ONLY="s3;ecs;lambda" \
+            -DCMAKE_BUILD_TYPE=Debug && \
+    cmake --build . --config=Debug && \
+    cmake --install . --config=Debug && \
+    rm -rf /tmp/aws-sdk-cpp
+
+# 7. Install hiredis
+RUN wget -O /tmp/hiredis-1.2.0.tar.gz https://github.com/redis/hiredis/archive/refs/tags/v1.2.0.tar.gz && \
+    tar -xvf /tmp/hiredis-1.2.0.tar.gz -C /tmp && \
+    cd /tmp/hiredis-1.2.0 && \
+    make USE_SSL=1 && make install && make install-ssl && \
+    rm -rf /tmp/hiredis-1.2.0.tar.gz /tmp/hiredis-1.2.0
+
+# 8. Install AWS Lambda C++ Runtime
+RUN git clone https://github.com/awslabs/aws-lambda-cpp.git /tmp/aws-lambda-cpp && \
+    cd /tmp/aws-lambda-cpp && \
+    mkdir build && cd build && \
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/lambda-install && \
+    make && make install
+
+# 9. Install GKlib and Metis
+RUN git clone https://github.com/KarypisLab/GKlib.git /tmp/GKlib && \
+    cd /tmp/GKlib && \
+    make config && \
+    make && \
+    make install && \
+    git clone https://github.com/KarypisLab/METIS.git /tmp/METIS && \
+    cd /tmp/METIS && \
+    make config i64=1 r64=1 cc=gcc prefix=~/local && \
+    make && \
+    make install && \
+    rm -rf /tmp/GKlib /tmp/METIS
+
+# 9. Create the working directory
+WORKDIR /app
+
+# 10. Compile the proxy_server
+COPY ./include /app/include
+COPY ./test /app/test
+COPY CMakeLists.txt /app/CMakeLists.txt
+RUN mkdir build && cd build && \
+    cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=~/lambda-install && \
+    make && \
+    chmod +x /app/build/proxy_server
+
+# 11. Set the command to run the proxy_server
+CMD ["./build/proxy_server", "-cores", "16", "--v", "1"]
