@@ -1,6 +1,17 @@
 # FaaSBoard
 
-[![Static Badge](https://img.shields.io/badge/Organization_Website-EPCC-purple)](http://epcc.sjtu.edu.cn)
+1.  [Introduction](#introduction)
+2.  [Hardware and Software Configuration](#hardware-and-software-configuration)
+3.  [Structure](#structure)
+4.  [Dependency and Installation](#dependency-and-installation)
+5.  [Workflow](#workflow)
+    - [Download a Graph Dataset and Build CSR](#download-a-graph-dataset-and-build-csr)
+    - [Run a Graph Processing Task Locally](#run-a-graph-processing-task-locally)
+    - [Basic Functionality Test Locally](#basic-functionality-test-locally)
+    - [Run a Graph Processing Task on AWS](#run-a-graph-processing-task-on-aws)
+    - [Unified Launch Script](#unified-launch-script)
+6.  [Source of Graph Datasets](#source-of-graph-datasets)
+7.  [Previous Work](#previous-work)
 
 ## Introduction
 
