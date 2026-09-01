@@ -188,4 +188,11 @@ We thank the authors and maintainers of these open-source projects for making th
   pages={385--400},
   year={2024}
 }
+
+@inproceedings{liu2026faasboard,
+  title={FaaSBoard: Efficient Graph Processing with a Disaggregated Architecture on Serverless Services},
+  author={Liu, Yushi and Ruan, Yikang and Ruan, Letian and Li, Zijun and Gao, Sen and Cui, Weihao and Sun, Shixuan and Chen, Quan and Quan, Shuo and Wu, Jie and He, Bingsheng and Guo, Minyi},
+  booktitle={Proceedings of the 2026 ACM SIGMOD International Conference on Management of Data},
+  pages={385--400}
+}
 ```
